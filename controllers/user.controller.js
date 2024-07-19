@@ -1,6 +1,7 @@
 const models = require("../models");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Validator = require("fastest-validator");
 
 function register(req, res) {
   models.User.findOne({
@@ -20,6 +21,20 @@ function register(req, res) {
             email: req.body.email,
             password: hash,
           };
+          const schema = {
+            name: { type: "string", optional: false, max: "10" },
+            email: { type: "string", optional: false, max: "20" },
+          };
+
+          const v = new Validator();
+          const valResponse = v.validate(user, schema);
+
+          if (valResponse !== true) {
+            return res.status(400).json({
+              message: "Inavalid  or missing fields",
+              errors: valResponse,
+            });
+          }
 
           models.User.create(user)
             .then((result) => {
@@ -38,6 +53,51 @@ function register(req, res) {
     }
   });
 }
+
+function login(req, res) {
+  models.User.findOne({
+    where: { email: req.body.email },
+  })
+    .then((user) => {
+      if (user === null) {
+        res.status(401).json({
+          message: "Invalid credentials",
+        });
+      } else {
+        bcryptjs.compare(
+          req.body.password,
+          user.password,
+          function (err, result) {
+            if (result) {
+              const token = jwt.sign(
+                {
+                  email: user.email,
+                  userId: user.id,
+                },
+                "secret",
+                function (err, token) {
+                  res.status(200).json({
+                    message: "Authentication successful",
+                    token: token,
+                  });
+                }
+              );
+            } else {
+              res.status(401).json({
+                message: "Invalid credentials",
+              });
+            }
+          }
+        );
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({
+        message: "Something went wrong",
+      });
+    });
+}
 module.exports = {
   register: register,
+  login: login,
 };
