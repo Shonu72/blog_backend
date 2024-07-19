@@ -11,5 +11,7 @@ app.get("/", (req, res) => {
 });
 
 const postsRoute = require("./routes/posts");
+const userRoute = require("./routes/users");
 app.use("/posts", postsRoute);
+app.use("/users", userRoute);
 module.exports = app;
