@@ -1,3 +1,4 @@
+const Validator = require("fastest-validator");
 const models = require("../models");
 
 function save(req, res) {
@@ -8,6 +9,22 @@ function save(req, res) {
     categoryId: req.body.categoryId,
     userId: 1,
   };
+
+  const schecma = {
+    title: { type: "string", optional: false, max: "100" },
+    content: { type: "string", optional: false, max: "1000" },
+    categoryId: { type: "number", optional: false },
+  };
+
+  const v = new Validator();
+  const valResponse = v.validate(post, schecma);
+
+  if (valResponse !== true) {
+    return res.status(400).json({
+      message: "Inavalid post type or missing fields",
+      errors: valResponse,
+    });
+  }
   models.Post.create(post)
     .then((result) => {
       res.status(201).json({
@@ -65,6 +82,22 @@ function updatePost(req, res) {
     categoryId: req.body.categoryId,
   };
   const userId = 1;
+
+  const schecma = {
+    title: { type: "string", optional: false, max: "100" },
+    content: { type: "string", optional: false, max: "1000" },
+    categoryId: { type: "number", optional: false },
+  };
+
+  const v = new Validator();
+  const valResponse = v.validate(updatedPost, schecma);
+
+  if (valResponse !== true) {
+    return res.status(400).json({
+      message: "Inavalid post type or missing fields",
+      errors: valResponse,
+    });
+  }
 
   models.Post.update(updatedPost, { where: { id: id, userId: userId } })
     .then((result) => {
