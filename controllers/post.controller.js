@@ -7,7 +7,7 @@ function save(req, res) {
     content: req.body.content,
     imageUrl: req.body.imageUrl,
     categoryId: req.body.categoryId,
-    userId: 1,
+    userId: req.userData.userId,
   };
 
   const schecma = {
@@ -25,19 +25,29 @@ function save(req, res) {
       errors: valResponse,
     });
   }
-  models.Post.create(post)
-    .then((result) => {
-      res.status(201).json({
-        message: "Post created successfully",
-        post: result,
+
+  models.Category.findByPk(req.body.categoryId).then(result => {
+    if (result !== null) {
+      models.Post.create(post)
+        .then((result) => {
+          res.status(201).json({
+            message: "Post created successfully",
+            post: result,
+          });
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "something went wrong",
+            error: error,
+          });
+        });
+    } else {
+      res.status(400).json({
+        message: "invalid category",
       });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "something went wrong",
-        error: error,
-      });
-    });
+    }
+  })
+
 }
 
 function showPost(req, res) {
@@ -81,7 +91,7 @@ function updatePost(req, res) {
     imageUrl: req.body.imageUrl,
     categoryId: req.body.categoryId,
   };
-  const userId = 1;
+  const userId = req.userData.userId;
 
   const schecma = {
     title: { type: "string", optional: false, max: "100" },
@@ -99,24 +109,33 @@ function updatePost(req, res) {
     });
   }
 
-  models.Post.update(updatedPost, { where: { id: id, userId: userId } })
-    .then((result) => {
-      res.status(200).json({
-        message: "Post updated successfully",
-        result: updatedPost,
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Something went wrong",
-        error: error,
-      });
-    });
+  models.Category.findByPk(req.body.categoryId).then(result => {
+    if (result !== null) {
+      models.Post.update(updatedPost, { where: { id: id, userId: userId } })
+        .then((result) => {
+          res.status(200).json({
+            message: "Post updated successfully",
+            result: updatedPost,
+          });
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "Something went wrong",
+            error: error,
+          });
+        });
+    } else {
+      res.status(400).json({
+        message: "Invalid category"
+      })
+    }
+  })
+
 }
 
 function deletePost(req, res) {
   const id = req.params.id;
-  const userId = 1;
+  const userId = req.userData.userId;
 
   models.Post.destroy({ where: { id: id, userId: userId } })
     .then((result) => {
